@@ -1,3 +1,5 @@
+// Controller de reservas: listagem, criação com verificação de disponibilidade,
+// consulta por usuário, por ID e por laboratório/data, além de atualização de status.
 const Reservation = require('../models/Reservation');
 
 const reservationController = {

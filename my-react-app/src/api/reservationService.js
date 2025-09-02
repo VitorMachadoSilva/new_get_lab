@@ -1,4 +1,4 @@
-// src/api/reservationService.js
+// API de reservas: listagem geral, por lab/data, por usuário, CRUD e status.
 import api from "./client";
 
 export async function getReservations() {

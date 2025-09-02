@@ -1,4 +1,5 @@
-// src/hooks/useAuth.js
+// Hook de autenticação: mantém usuário e estado de carregamento, faz leitura de /auth/me,
+// expõe funções login/logout e persiste token no localStorage.
 import { useState, useEffect } from "react";
 import { getToken, removeToken } from "../utils/token";
 import { me } from "../api/auth";

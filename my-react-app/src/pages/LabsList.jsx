@@ -1,4 +1,4 @@
-// src/pages/LabsList.jsx
+// Lista de laboratórios disponíveis: exibe cards com dados e ação para reservar.
 import { useEffect, useState } from "react";
 import {
   Grid,

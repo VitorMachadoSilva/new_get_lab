@@ -1,3 +1,4 @@
+// Controller de autenticação: login, registro, dados do usuário, listagem e alteração de senha.
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -7,7 +8,7 @@ const authController = {
     try {
       const { email, password } = req.body;
       
-      // Validar entrada
+      // Validar entrada obrigatória
       if (!email || !password) {
         return res.status(400).json({ error: 'Email e senha são obrigatórios' });
       }

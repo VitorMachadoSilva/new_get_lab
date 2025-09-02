@@ -1,4 +1,4 @@
-// src/components/Layout.jsx
+// Layout principal: AppBar + Drawer com navegação condicional por papel do usuário.
 import { useState } from 'react';
 import {
   AppBar,

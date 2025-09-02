@@ -1,4 +1,4 @@
-// src/components/ProtectedRoute.jsx
+// Rota protegida: redireciona para /login quando não autenticado.
 import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({ user, children }) {

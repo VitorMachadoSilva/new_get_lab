@@ -1,4 +1,4 @@
-// src/App.jsx
+// Raiz do app React: define tema MUI e as rotas principais com guardas.
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';

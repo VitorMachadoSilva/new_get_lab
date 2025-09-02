@@ -1,4 +1,4 @@
-// src/api/client.js
+// Cliente Axios centralizado: define baseURL, injeta token JWT e trata 401.
 import axios from "axios";
 import { getToken } from "../utils/token";
 
@@ -7,6 +7,7 @@ const api = axios.create({
   timeout: 10000,
 });
 
+// Interceptor de request: adiciona Authorization Bearer se existir token
 api.interceptors.request.use((config) => {
   const token = getToken();
   if (token) {

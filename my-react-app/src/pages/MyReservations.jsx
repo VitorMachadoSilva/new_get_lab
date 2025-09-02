@@ -1,4 +1,4 @@
-// src/pages/MyReservations.jsx
+// Minhas reservas: lista apenas as reservas do usuário atual e permite cancelar.
 import { useEffect, useState } from "react";
 import {
   Box,

@@ -1,3 +1,4 @@
+// Variante de middleware de autenticação via JWT usando header já dividido.
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {

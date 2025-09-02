@@ -1,4 +1,4 @@
-// src/pages/Register.jsx
+// Página de registro: cria usuário (FACULTY/ADMIN) e redireciona para login.
 import { useState } from "react";
 import {
   Container,

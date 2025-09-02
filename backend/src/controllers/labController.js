@@ -1,3 +1,4 @@
+// Controller de laboratórios: CRUD e consultas com restrições de permissão.
 const Labs = require('../models/Labs');
 
 const labController = {

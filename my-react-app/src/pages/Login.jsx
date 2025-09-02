@@ -1,4 +1,4 @@
-// src/pages/Login.jsx
+// Página de login: autentica usuário e propaga token via onLogin.
 import { useState } from "react";
 import {
   Container,

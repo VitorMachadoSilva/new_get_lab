@@ -1,3 +1,5 @@
+// Middleware de autenticação via JWT.
+// Lê o header Authorization (Bearer <token>), valida e injeta o payload em req.user.
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {

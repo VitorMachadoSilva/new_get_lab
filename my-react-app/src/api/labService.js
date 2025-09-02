@@ -1,4 +1,4 @@
-// src/api/labService.js
+// API de laboratórios: consultas e operações administrativas.
 import api from "./client";
 
 export async function getLabs() {

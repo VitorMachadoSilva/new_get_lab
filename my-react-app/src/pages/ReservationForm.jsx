@@ -1,4 +1,5 @@
-// src/pages/ReservationForm.jsx
+// Página de criação de reserva: seleciona lab, data, hora e duração, exibe conflitos
+// e envia para a API criar a reserva.
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {

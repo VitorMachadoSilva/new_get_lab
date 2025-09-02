@@ -1,8 +1,10 @@
+// Model de usuários: acesso ao banco para criação, consulta e atualização de senha.
 const pool = require('../config/database');
 const bcrypt = require('bcryptjs');
 
 class User {
   static async create({ name, email, password, role = 'FACULTY' }) {
+    // Armazena a senha com hash seguro
     const hashedPassword = await bcrypt.hash(password, 10);
     const query = `
       INSERT INTO users (name, email, password, role) 

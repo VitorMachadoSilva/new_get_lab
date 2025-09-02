@@ -1,4 +1,5 @@
 // scripts/migrate.js
+// Script de migração simples: cria tabelas necessárias e insere dados iniciais.
 const pool = require('../config/database');
 
 const createTables = async () => {

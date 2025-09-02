@@ -1,4 +1,4 @@
-// src/pages/AdminDashboard.jsx
+// Painel administrativo: lista todas as reservas e permite aprovar/rejeitar.
 import { useEffect, useState } from "react";
 import {
   Box,

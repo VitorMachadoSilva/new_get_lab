@@ -1,3 +1,5 @@
+// Calendário de horários: mostra slots de 08:00-17:00 com estado (ocupado/selecionado/conflito)
+// e permite selecionar um horário disponível.
 import React from 'react';
 import {
   Box,
@@ -9,6 +11,7 @@ import {
   Divider
 } from '@mui/material';
 import { Schedule, CheckCircle, Cancel, Warning } from '@mui/icons-material';
+import { formatBrazilianDateFromYmd } from '../utils/date';
 
 export default function TimeSlotCalendar({ reservations, selectedDate, selectedTime, selectedDuration, onTimeSelect }) {
   // Horários disponíveis (8h às 18h)
@@ -89,7 +92,7 @@ export default function TimeSlotCalendar({ reservations, selectedDate, selectedT
   return (
     <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
       <Typography variant="h6" gutterBottom>
-        📅 Horários para {selectedDate ? new Date(selectedDate).toLocaleDateString('pt-BR') : 'Data selecionada'}
+        📅 Horários para {selectedDate ? formatBrazilianDateFromYmd(selectedDate) : 'Data selecionada'}
       </Typography>
       
       <Box sx={{ mb: 2 }}>

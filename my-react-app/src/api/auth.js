@@ -1,4 +1,4 @@
-// src/api/auth.js
+// API de autenticação: login, registro, dados do usuário, listagem e alteração de senha.
 import api from "./client";
 
 export async function login(email, password) {

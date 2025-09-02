@@ -1,3 +1,5 @@
+// Model de reservas: consultas com JOINs (lab e user), criação, atualização,
+// remoção e verificação de disponibilidade sem conflitos de horário.
 const pool = require('../config/database');
 
 class Reservation {

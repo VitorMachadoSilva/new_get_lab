@@ -1,4 +1,4 @@
-// src/components/AdminRoute.jsx
+// Rota administrativa: exige usuário autenticado com role ADMIN.
 import { Navigate } from "react-router-dom";
 
 export default function AdminRoute({ user, children }) {

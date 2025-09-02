@@ -1,3 +1,4 @@
+// Model de laboratórios: operações CRUD na tabela labs.
 const pool = require('../config/database');
 
 class Labs {

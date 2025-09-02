@@ -1,3 +1,5 @@
+// Middlewares de validação com express-validator.
+// Use os arrays exportados nas rotas para validar o corpo das requisições.
 const { body, validationResult } = require('express-validator');
 
 const handleValidationErrors = (req, res, next) => {
