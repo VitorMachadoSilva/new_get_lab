@@ -48,7 +48,8 @@ export default function LabsList() {
   }
 
   return (
-    <Box>
+    <div>
+    <Box sx={{}}>
       <Typography variant="h4" gutterBottom>
         Laboratórios Disponíveis
       </Typography>
@@ -108,5 +109,6 @@ export default function LabsList() {
         </Box>
       )}
     </Box>
+    </div>
   );
 }

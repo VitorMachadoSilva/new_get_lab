@@ -91,7 +91,6 @@ export default function AdminDashboard() {
           {error}
         </Alert>
       )}
-
       <TableContainer component={Paper}>
         <Table>
           <TableHead>

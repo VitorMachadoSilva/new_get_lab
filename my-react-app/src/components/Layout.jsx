@@ -29,6 +29,7 @@ import {
   Person
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import GetLabIcon from '../assets/GetLab-Branco-Png.png';
 
 const drawerWidth = 240;
 
@@ -67,13 +68,18 @@ export default function Layout({ user, children, onLogout }) {
 
   const drawer = (
     <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Lab Reservas
+      <Toolbar sx={{backgroundColor:'#3f51b5'}}>
+        <Typography variant="h6" noWrap component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#fff' }}>
+          Get Lab
+          <img 
+            src={GetLabIcon}
+            alt="GetLab Logo"
+            style={{ width: 50, marginBottom:0 }}
+          />
         </Typography>
       </Toolbar>
       <Divider />
-      <List>
+      <List sx={{backgroundColor:''}}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
@@ -100,15 +106,6 @@ export default function Layout({ user, children, onLogout }) {
         }}
       >
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Sistema de Reserva de Laboratórios
           </Typography>
@@ -156,7 +153,7 @@ export default function Layout({ user, children, onLogout }) {
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
-        <Drawer
+        {/* <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={handleDrawerToggle}
@@ -167,9 +164,9 @@ export default function Layout({ user, children, onLogout }) {
             display: { xs: 'block', sm: 'none' },
             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           }}
-        >
+        > */}
           {drawer}
-        </Drawer>
+        {/* </Drawer> */}
         <Drawer
           variant="permanent"
           sx={{

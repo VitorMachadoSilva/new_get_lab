@@ -14,6 +14,7 @@ import {
 import { PersonAdd } from "@mui/icons-material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { signup } from "../api/auth";
+import CustomTextField from "../components/CustomTextField";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -68,7 +69,7 @@ export default function Register() {
           alignItems: "center",
         }}
       >
-        <Paper elevation={3} sx={{ padding: 4, width: "100%" }}>
+        <Paper elevation={3}sx={{ padding: 4, width: "100%", backgroundColor: '#dce0f3ff', borderRadius: 8, boxShadow: '12px 24px 100px rgba(0, 0, 0, 0.1)',  }}>
           <Box display="flex" flexDirection="column" alignItems="center">
             <PersonAdd sx={{ fontSize: 40, mb: 2 }} color="primary" />
             <Typography component="h1" variant="h5">
@@ -83,7 +84,7 @@ export default function Register() {
               </Alert>
             )}
 
-            <TextField
+            <CustomTextField
               margin="normal"
               required
               fullWidth
@@ -95,7 +96,7 @@ export default function Register() {
               value={formData.name}
               onChange={handleChange}
             />
-            <TextField
+            <CustomTextField
               margin="normal"
               required
               fullWidth
@@ -106,7 +107,7 @@ export default function Register() {
               value={formData.email}
               onChange={handleChange}
             />
-            <TextField
+            <CustomTextField
               margin="normal"
               required
               fullWidth
@@ -118,7 +119,7 @@ export default function Register() {
               value={formData.password}
               onChange={handleChange}
             />
-            <TextField
+            <CustomTextField
               margin="normal"
               required
               fullWidth
@@ -130,7 +131,7 @@ export default function Register() {
             >
               <MenuItem value="FACULTY">Docente</MenuItem>
               <MenuItem value="ADMIN">Administrador</MenuItem>
-            </TextField>
+            </CustomTextField>
             <Button
               type="submit"
               fullWidth
