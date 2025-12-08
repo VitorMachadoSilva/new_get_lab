@@ -11,6 +11,8 @@ router.use(authMiddleware);
 router.get('/', reservationController.getAll);
 // Consultar reservas de um lab em uma data específica
 router.get('/lab-date', reservationController.getByLabAndDate);
+// RESERVA NOVA: Reservas do dia atual (todos veem as do dia, ADMIN vê todas, FACULTY vê suas)
+router.get('/dia', reservationController.getReservasDoDia);
 // Reservas por usuário (somente o próprio usuário ou ADMIN)
 router.get('/user/:userId', reservationController.getByUserId);
 // Detalhe por ID (somente dono ou ADMIN)

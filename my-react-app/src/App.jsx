@@ -10,6 +10,7 @@ import ReservationForm from "./pages/ReservationForm";
 import MyReservations from "./pages/MyReservations";
 import AdminDashboard from "./pages/AdminDashboardPage";
 import UserProfile from "./pages/UserProfile";
+import Reservas from "./pages/Reservas";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
 
@@ -68,6 +69,13 @@ export default function App() {
             <ProtectedRoute user={auth.user}>
               <Layout user={auth.user} onLogout={auth.logout}>
                 <MyReservations />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/reservas" element={ // ADICIONE ESTA ROTA
+            <ProtectedRoute user={auth.user}>
+              <Layout user={auth.user} onLogout={auth.logout}>
+                <Reservas />
               </Layout>
             </ProtectedRoute>
           } />

@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { login as apiLogin } from "../api/auth";
-import GetLabIcon from '../assets/GetLab-png.png';
+import GetLabIcon from '../assets/GetLab-Branco-Png.png';
 // Nota: Removi o CustomTextField pois vou usar TextField padrão com estilos personalizados
 
 export default function Login({ onLogin }) {
@@ -65,6 +65,11 @@ export default function Login({ onLogin }) {
         <div style={{ textAlign: 'center', color: 'white' }}>
           <Typography variant="h2" style={{ fontWeight: 'bold', marginBottom: '20px' }}>
             GetLab
+            <img 
+              src={GetLabIcon}
+              alt="GetLab Logo"
+              style={{ width: 50, marginBottom:0 }}
+            />
           </Typography>
           <Typography variant="h6">
             Sistema de Gestão Laboratorial
@@ -196,7 +201,7 @@ export default function Login({ onLogin }) {
                   fontSize: '14px'
                 }}
               >
-                Esqueceu a senha? Clique aqui
+                Não possui uma conta? Cadastre-se!
               </Link>
             </Box>
           </Box>

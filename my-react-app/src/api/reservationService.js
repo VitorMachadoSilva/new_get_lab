@@ -6,6 +6,12 @@ export async function getReservations() {
   return res.data;
 }
 
+// NOVA FUNÇÃO: Reservas do dia
+export async function getReservasDoDia(date) {
+  const res = await api.get(`/reservations/dia${date ? `?date=${date}` : ''}`);
+  return res.data;
+}
+
 export async function getReservationsByLabAndDate(labId, date) {
   const res = await api.get(`/reservations/lab-date?lab_id=${labId}&date=${date}`);
   return res.data;

@@ -16,7 +16,8 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Divider
+  Divider,
+  Button
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -51,14 +52,10 @@ export default function Layout({ user, children, onLogout }) {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    handleClose();
-    onLogout();
-  };
-
   const menuItems = [
     { text: 'Laboratórios', icon: <ComputerIcon />, path: '/' },
     { text: 'Minhas Reservas', icon: <CalendarIcon />, path: '/my-reservations' },
+    { text: 'Reservas do Dia', path: '/reservas' }, // ADICIONE ESTA LINHA
     { text: 'Meu Perfil', icon: <Person />, path: '/profile' },
   ];
 
@@ -67,19 +64,24 @@ export default function Layout({ user, children, onLogout }) {
   }
 
   const drawer = (
-    <div>
-      <Toolbar sx={{backgroundColor:'#3f51b5'}}>
-        <Typography variant="h6" noWrap component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#fff' }}>
-          Get Lab
-          <img 
-            src={GetLabIcon}
-            alt="GetLab Logo"
-            style={{ width: 50, marginBottom:0 }}
-          />
-        </Typography>
-      </Toolbar>
-      <Divider />
-      <List sx={{backgroundColor:''}}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Parte superior com logo */}
+      <Box>
+        <Toolbar sx={{backgroundColor:'#1c286d'}}>
+          <Typography variant="h6" noWrap component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#fff' }}>
+            Get Lab
+            <img 
+              src={GetLabIcon}
+              alt="GetLab Logo"
+              style={{ width: 50, marginBottom:0 }}
+            />
+          </Typography>
+        </Toolbar>
+        <Divider />
+      </Box>
+
+      {/* Lista de menu items - ocupa o espaço disponível */}
+      <List sx={{ flexGrow: 1 }}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
@@ -92,7 +94,26 @@ export default function Layout({ user, children, onLogout }) {
           </ListItem>
         ))}
       </List>
-    </div>
+
+      {/* Botão Sair fixado no canto inferior */}
+      <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Button
+          fullWidth
+          variant="outlined"
+          color="error"
+          startIcon={<Logout />}
+          onClick={onLogout}
+          sx={{
+            justifyContent: 'flex-start',
+            py: 1.5,
+            textTransform: 'none',
+            fontWeight: 'bold'
+          }}
+        >
+          Sair
+        </Button>
+      </Box>
+    </Box>
   );
 
   return (
@@ -105,7 +126,7 @@ export default function Layout({ user, children, onLogout }) {
           ml: { sm: `${drawerWidth}px` },
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{backgroundColor: "#1c286d"}}>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Sistema de Reserva de Laboratórios
           </Typography>
@@ -138,7 +159,7 @@ export default function Layout({ user, children, onLogout }) {
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
-              <MenuItem onClick={handleLogout}>
+              <MenuItem onClick={onLogout}>
                 <ListItemIcon>
                   <Logout fontSize="small" />
                 </ListItemIcon>
@@ -153,25 +174,15 @@ export default function Layout({ user, children, onLogout }) {
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
-        {/* <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        > */}
-          {drawer}
-        {/* </Drawer> */}
         <Drawer
           variant="permanent"
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth,
+              overflow: 'hidden', // Para garantir que o layout flex funcione
+            }, 
           }}
           open
         >

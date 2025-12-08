@@ -1,5 +1,6 @@
 // Controller de reservas: listagem, criação com verificação de disponibilidade,
 // consulta por usuário, por ID e por laboratório/data, além de atualização de status.
+const pool = require('../config/database'); // Adicione esta linha
 const Reservation = require('../models/Reservation');
 
 const reservationController = {
@@ -9,6 +10,43 @@ const reservationController = {
       res.json(reservations);
     } catch (error) {
       console.error('Erro ao buscar reservas:', error);
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  },
+
+  // NOVO MÉTODO: Buscar reservas do dia atual
+  async getReservasDoDia(req, res) {
+    try {
+      const { date } = req.query;
+      const hoje = date || new Date().toISOString().split('T')[0];
+      
+      // Para ADMIN: todas as reservas do dia
+      // Para FACULTY: suas reservas do dia
+      let query = `
+        SELECT 
+          r.*,
+          json_build_object('id', l.id, 'name', l.name, 'location', l.location) as lab,
+          json_build_object('id', u.id, 'name', u.name, 'email', u.email) as user
+        FROM reservations r 
+        JOIN labs l ON r.lab_id = l.id 
+        JOIN users u ON r.user_id = u.id 
+        WHERE r.date = $1
+        AND r.status NOT IN ('CANCELLED')
+      `;
+      
+      const values = [hoje];
+      
+      if (req.user.role === 'FACULTY') {
+        query += ' AND r.user_id = $2';
+        values.push(req.user.id);
+      }
+      
+      query += ' ORDER BY r.time';
+      
+      const { rows } = await pool.query(query, values);
+      res.json(rows);
+    } catch (error) {
+      console.error('Erro ao buscar reservas do dia:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   },
