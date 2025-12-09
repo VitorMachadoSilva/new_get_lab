@@ -34,10 +34,21 @@ export default function ReservationForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [existingReservations, setExistingReservations] = useState([]);
+  const [loadingReservations, setLoadingReservations] = useState(false);
 
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const labIdFromParams = params.get("lab_id");
+
+  // Função para normalizar tempo (remove segundos se existirem)
+  const normalizeTime = (timeString) => {
+    if (!timeString) return '';
+    // Se tiver segundos (08:00:00), remove os segundos
+    if (timeString.includes(':') && timeString.split(':').length === 3) {
+      return timeString.substring(0, 5); // Pega apenas HH:MM
+    }
+    return timeString;
+  };
 
   useEffect(() => {
     loadLabs();
@@ -48,6 +59,23 @@ export default function ReservationForm() {
       setFormData(prev => ({ ...prev, lab_id: labIdFromParams }));
     }
   }, [labIdFromParams]);
+
+  // Efeito para carregar reservas quando lab ou data mudam
+  useEffect(() => {
+    loadExistingReservations();
+  }, [formData.lab_id, formData.date]);
+
+  // Efeito para verificar se o horário digitado manualmente está ocupado
+  useEffect(() => {
+    if (formData.time && formData.lab_id && formData.date && formData.duration) {
+      const isOccupied = isSelectedTimeOccupied();
+      if (isOccupied) {
+        setError("Atenção: Este horário está ocupado. Por favor, selecione um horário disponível no calendário abaixo.");
+      } else if (error && error.includes("ocupado")) {
+        setError(""); // Limpa o erro se o usuário corrigir
+      }
+    }
+  }, [formData.time, formData.duration, existingReservations]); // Adicionado existingReservations como dependência
 
   const loadLabs = async () => {
     try {
@@ -69,34 +97,53 @@ export default function ReservationForm() {
     }
 
     try {
+      setLoadingReservations(true);
       const data = await getReservationsByLabAndDate(formData.lab_id, formData.date);
-      setExistingReservations(data);
+      setExistingReservations(data || []);
     } catch (err) {
       console.error(err);
-      // Não vamos mostrar erro aqui, apenas log
+      setExistingReservations([]);
+    } finally {
+      setLoadingReservations(false);
     }
   };
 
   const handleTimeSelect = (time) => {
     setFormData(prev => ({ ...prev, time }));
+    // Limpa erro se estiver selecionando do calendário
+    if (error && error.includes("ocupado")) {
+      setError("");
+    }
   };
 
   const handleChange = (e) => {
-    const newFormData = {
-      ...formData,
-      [e.target.name]: e.target.value
-    };
-    setFormData(newFormData);
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Função para criar Date objects consistentes
+  const createTimeDate = (time) => {
+    const normalizedTime = normalizeTime(time);
+    return new Date(`1970-01-01T${normalizedTime}:00`);
+  };
+
+  // Função para verificar se o horário selecionado está ocupado
+  const isSelectedTimeOccupied = () => {
+    if (!formData.time || !formData.lab_id || !formData.date || !formData.duration) return false;
+    if (!existingReservations || existingReservations.length === 0) return false;
     
-    // Se mudou laboratório ou data, buscar reservas existentes
-    if (e.target.name === 'lab_id' || e.target.name === 'date') {
-      // Usar setTimeout para evitar muitas chamadas durante digitação
-      setTimeout(() => {
-        if (newFormData.lab_id && newFormData.date) {
-          loadExistingReservations();
-        }
-      }, 300);
-    }
+    const selectedStart = createTimeDate(formData.time);
+    const selectedEnd = new Date(selectedStart.getTime() + formData.duration * 60 * 60 * 1000);
+    
+    return existingReservations.some(reservation => {
+      if (!reservation.time || !reservation.duration) return false;
+      
+      const reservationStart = createTimeDate(reservation.time);
+      const reservationEnd = new Date(reservationStart.getTime() + reservation.duration * 60 * 60 * 1000);
+      
+      // Verifica se os intervalos se sobrepõem
+      return (selectedStart < reservationEnd && selectedEnd > reservationStart);
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -105,7 +152,14 @@ export default function ReservationForm() {
     setError("");
     setSuccess("");
 
-    // Validações
+    // Validação: verificar se o horário está ocupado
+    if (isSelectedTimeOccupied()) {
+      setError("Este horário já está ocupado. Por favor, selecione outro horário no calendário abaixo.");
+      setSubmitting(false);
+      return;
+    }
+
+    // Validações de data
     const selectedDate = new Date(formData.date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -170,8 +224,10 @@ export default function ReservationForm() {
 
       <Paper elevation={2} sx={{ p: 3, maxWidth: 600 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
-            {error}
+          <Alert severity={error.includes("ocupado") ? "warning" : "error"} sx={{ mb: 2 }} onClose={() => setError("")}>
+            {error.split('\n').map((line, index) => (
+              <div key={index}>{line}</div>
+            ))}
           </Alert>
         )}
 
@@ -209,6 +265,9 @@ export default function ReservationForm() {
             InputLabelProps={{ shrink: true }}
             value={formData.date}
             onChange={handleChange}
+            inputProps={{
+              min: new Date().toISOString().split('T')[0] // Não permite datas passadas
+            }}
           />
 
           <TextField
@@ -221,6 +280,8 @@ export default function ReservationForm() {
             InputLabelProps={{ shrink: true }}
             value={formData.time}
             onChange={handleChange}
+            error={isSelectedTimeOccupied()}
+            helperText={isSelectedTimeOccupied() ? "Horário ocupado - selecione no calendário abaixo" : ""}
           />
 
           <FormControl fullWidth margin="normal" required>
@@ -241,13 +302,21 @@ export default function ReservationForm() {
 
           {/* Mostrar calendário de horários */}
           {formData.lab_id && formData.date && (
-            <TimeSlotCalendar
-              reservations={existingReservations}
-              selectedDate={formData.date}
-              selectedTime={formData.time}
-              selectedDuration={formData.duration}
-              onTimeSelect={handleTimeSelect}
-            />
+            <>
+              {loadingReservations ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : (
+                <TimeSlotCalendar
+                  reservations={existingReservations}
+                  selectedDate={formData.date}
+                  selectedTime={formData.time}
+                  selectedDuration={formData.duration}
+                  onTimeSelect={handleTimeSelect}
+                />
+              )}
+            </>
           )}
 
           <Button
@@ -256,10 +325,16 @@ export default function ReservationForm() {
             variant="contained"
             startIcon={<Schedule />}
             sx={{ mt: 3 }}
-            disabled={submitting}
+            disabled={submitting || isSelectedTimeOccupied() || loadingReservations}
           >
             {submitting ? "Criando reserva..." : "Fazer Reserva"}
           </Button>
+          
+          {isSelectedTimeOccupied() && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              ⚠️ Selecione um horário disponível no calendário acima para continuar.
+            </Alert>
+          )}
         </Box>
       </Paper>
     </Box>

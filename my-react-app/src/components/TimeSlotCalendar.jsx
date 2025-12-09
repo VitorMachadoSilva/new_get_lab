@@ -19,19 +19,39 @@ export default function TimeSlotCalendar({ reservations, selectedDate, selectedT
     '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'
   ];
 
+  // Função para normalizar tempo (remove segundos se existirem)
+  const normalizeTime = (timeString) => {
+    if (!timeString) return '';
+    // Se tiver segundos (08:00:00), remove os segundos
+    if (timeString.includes(':') && timeString.split(':').length === 3) {
+      return timeString.substring(0, 5); // Pega apenas HH:MM
+    }
+    return timeString;
+  };
+
+  // Função auxiliar para criar Date objects consistentes
+  const createTimeDate = (time) => {
+    const normalizedTime = normalizeTime(time);
+    // Garante que temos HH:MM:SS para o Date object
+    return new Date(`1970-01-01T${normalizedTime}:00`);
+  };
+
   // Função para verificar se um horário está ocupado
   const isTimeSlotOccupied = (time) => {
+    if (!reservations || reservations.length === 0) return false;
+    
+    const slotStart = createTimeDate(time);
+    const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000); // 1 hora
+    
     return reservations.some(reservation => {
-      const reservationStart = new Date(`2000-01-01T${reservation.time}`);
+      if (!reservation.time || !reservation.duration) return false;
+      
+      const normalizedReservationTime = normalizeTime(reservation.time);
+      const reservationStart = createTimeDate(normalizedReservationTime);
       const reservationEnd = new Date(reservationStart.getTime() + reservation.duration * 60 * 60 * 1000);
       
-      const slotStart = new Date(`2000-01-01T${time}`);
-      const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000); // 1 hora
-      
-      return (
-        (slotStart < reservationEnd && slotEnd > reservationStart) ||
-        (reservationStart < slotEnd && reservationEnd > slotStart)
-      );
+      // Verifica se os intervalos se sobrepõem
+      return (slotStart < reservationEnd && slotEnd > reservationStart);
     });
   };
 
@@ -39,31 +59,31 @@ export default function TimeSlotCalendar({ reservations, selectedDate, selectedT
   const isTimeSlotSelected = (time) => {
     if (!selectedTime || !selectedDuration) return false;
     
-    const selectedStart = new Date(`2000-01-01T${selectedTime}`);
+    const normalizedSelectedTime = normalizeTime(selectedTime);
+    const selectedStart = createTimeDate(normalizedSelectedTime);
     const selectedEnd = new Date(selectedStart.getTime() + selectedDuration * 60 * 60 * 1000);
     
-    const slotStart = new Date(`2000-01-01T${time}`);
+    const slotStart = createTimeDate(time);
     const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
     
-    return (
-      (slotStart >= selectedStart && slotStart < selectedEnd) ||
-      (slotEnd > selectedStart && slotEnd <= selectedEnd)
-    );
+    return (slotStart >= selectedStart && slotStart < selectedEnd);
   };
 
   // Função para obter informações da reserva em um horário
   const getReservationInfo = (time) => {
+    if (!reservations || reservations.length === 0) return null;
+    
+    const slotStart = createTimeDate(time);
+    const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
+    
     return reservations.find(reservation => {
-      const reservationStart = new Date(`2000-01-01T${reservation.time}`);
+      if (!reservation.time || !reservation.duration) return false;
+      
+      const normalizedReservationTime = normalizeTime(reservation.time);
+      const reservationStart = createTimeDate(normalizedReservationTime);
       const reservationEnd = new Date(reservationStart.getTime() + reservation.duration * 60 * 60 * 1000);
       
-      const slotStart = new Date(`2000-01-01T${time}`);
-      const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
-      
-      return (
-        (slotStart < reservationEnd && slotEnd > reservationStart) ||
-        (reservationStart < slotEnd && reservationEnd > slotStart)
-      );
+      return (slotStart < reservationEnd && slotEnd > reservationStart);
     });
   };
 
@@ -71,16 +91,17 @@ export default function TimeSlotCalendar({ reservations, selectedDate, selectedT
   const hasConflict = (time) => {
     if (!selectedTime || !selectedDuration) return false;
     
-    const selectedStart = new Date(`2000-01-01T${selectedTime}`);
+    const normalizedSelectedTime = normalizeTime(selectedTime);
+    const selectedStart = createTimeDate(normalizedSelectedTime);
     const selectedEnd = new Date(selectedStart.getTime() + selectedDuration * 60 * 60 * 1000);
     
-    const slotStart = new Date(`2000-01-01T${time}`);
+    const slotStart = createTimeDate(time);
     const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
     
-    return (
-      (selectedStart < slotEnd && selectedEnd > slotStart) &&
-      isTimeSlotOccupied(time)
-    );
+    // Verifica se há sobreposição
+    const hasOverlap = (selectedStart < slotEnd && selectedEnd > slotStart);
+    
+    return hasOverlap && isTimeSlotOccupied(time);
   };
 
   const handleTimeClick = (time) => {
@@ -165,7 +186,8 @@ export default function TimeSlotCalendar({ reservations, selectedDate, selectedT
                     size="medium"
                     sx={{ 
                       height: '40px',
-                      fontSize: '0.875rem'
+                      fontSize: '0.875rem',
+                      pointerEvents: 'none'
                     }}
                   />
                 </Box>
@@ -175,33 +197,36 @@ export default function TimeSlotCalendar({ reservations, selectedDate, selectedT
         })}
       </Grid>
 
-      {reservations.length > 0 && (
+      {reservations && reservations.length > 0 && (
         <>
           <Divider sx={{ my: 2 }} />
           <Typography variant="subtitle2" gutterBottom>
             📋 Reservas existentes:
           </Typography>
           <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
-            {reservations.map((reservation) => (
-              <Box key={reservation.id} sx={{ 
-                p: 1, 
-                mb: 1, 
-                bgcolor: 'rgba(244, 67, 54, 0.1)', 
-                borderRadius: 1,
-                border: '1px solid rgba(244, 67, 54, 0.3)'
-              }}>
-                <Typography variant="body2" fontWeight="medium">
-                  🕐 {reservation.time} - {(() => {
-                    const startTime = new Date(`2000-01-01T${reservation.time}`);
-                    const endTime = new Date(startTime.getTime() + reservation.duration * 60 * 60 * 1000);
-                    return endTime.toTimeString().slice(0, 5);
-                  })()} ({reservation.duration}h)
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  👤 {reservation.user?.name || 'Usuário'} | 📊 {reservation.status}
-                </Typography>
-              </Box>
-            ))}
+            {reservations.map((reservation) => {
+              const normalizedTime = normalizeTime(reservation.time);
+              const startTime = createTimeDate(normalizedTime);
+              const endTime = new Date(startTime.getTime() + reservation.duration * 60 * 60 * 1000);
+              const endTimeFormatted = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
+              
+              return (
+                <Box key={reservation.id} sx={{ 
+                  p: 1, 
+                  mb: 1, 
+                  bgcolor: 'rgba(244, 67, 54, 0.1)', 
+                  borderRadius: 1,
+                  border: '1px solid rgba(244, 67, 54, 0.3)'
+                }}>
+                  <Typography variant="body2" fontWeight="medium">
+                    🕐 {normalizedTime} - {endTimeFormatted} ({reservation.duration}h)
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    👤 {reservation.user?.name || 'Usuário'} | 📊 {reservation.status}
+                  </Typography>
+                </Box>
+              );
+            })}
           </Box>
         </>
       )}
