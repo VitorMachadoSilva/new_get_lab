@@ -31,6 +31,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import GetLabIcon from '../assets/GetLab-Branco-Png.png';
+import EventIcon from '@mui/icons-material/Event';
+
 
 const drawerWidth = 240;
 
@@ -55,7 +57,7 @@ export default function Layout({ user, children, onLogout }) {
   const menuItems = [
     { text: 'Laboratórios', icon: <ComputerIcon />, path: '/' },
     { text: 'Minhas Reservas', icon: <CalendarIcon />, path: '/my-reservations' },
-    { text: 'Reservas do Dia', path: '/reservas' }, // ADICIONE ESTA LINHA
+    { text: 'Reservas do Dia', icon:<EventIcon/> ,path: '/reservas' }, // ADICIONE ESTA LINHA
     { text: 'Meu Perfil', icon: <Person />, path: '/profile' },
   ];
 

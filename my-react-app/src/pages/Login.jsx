@@ -63,14 +63,18 @@ export default function Login({ onLogin }) {
         padding: '20px'
       }}>
         <div style={{ textAlign: 'center', color: 'white' }}>
-          <Typography variant="h2" style={{ fontWeight: 'bold', marginBottom: '20px' }}>
-            GetLab
-            <img 
-              src={GetLabIcon}
-              alt="GetLab Logo"
-              style={{ width: 50, marginBottom:0 }}
-            />
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: "20px" }}>
+  <img 
+    src={GetLabIcon}
+    alt="GetLab Logo"
+    style={{ width: 80 }}
+  />
+
+  <Typography variant="h2" sx={{ fontWeight: "bold" }}>
+    GetLab
+  </Typography>
+</Box>
+
           <Typography variant="h6">
             Sistema de Gestão Laboratorial
           </Typography>

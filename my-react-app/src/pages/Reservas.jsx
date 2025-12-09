@@ -13,7 +13,9 @@ import {
   Tooltip,
   Alert,
   CircularProgress,
-  Divider
+  Divider,
+  Avatar,
+  Stack
 } from "@mui/material";
 import {
   Maximize as MaximizeIcon,
@@ -21,10 +23,13 @@ import {
   Computer as ComputerIcon,
   Person as PersonIcon,
   Schedule as ScheduleIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  AccessTime as AccessTimeIcon,
+  MeetingRoom as MeetingRoomIcon
 } from "@mui/icons-material";
 import { format } from "date-fns";
-import { getReservasDoDia } from "../api/reservationService"; // Importe da sua API existente
+import { ptBR } from "date-fns/locale";
+import { getReservasDoDia } from "../api/reservationService";
 
 export default function Reservas() {
   const [reservas, setReservas] = useState([]);
@@ -34,7 +39,7 @@ export default function Reservas() {
   const [dataAtual, setDataAtual] = useState(new Date());
 
   // Formatar data para exibição
-  const dataFormatada = format(dataAtual, "EEEE, dd 'de' MMMM 'de' yyyy");
+  const dataFormatada = format(dataAtual, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   // Buscar reservas do dia atual
   useEffect(() => {
@@ -45,8 +50,6 @@ export default function Reservas() {
         
         // Formatar data para YYYY-MM-DD
         const dataParaAPI = format(dataAtual, "yyyy-MM-dd");
-        
-        // Usar a função da sua API existente
         const data = await getReservasDoDia(dataParaAPI);
         setReservas(data);
       } catch (err) {
@@ -59,27 +62,34 @@ export default function Reservas() {
 
     carregarReservas();
     
-    // Atualizar a cada 5 minutos para mostrar reservas em tempo real
-    const intervalo = setInterval(carregarReservas, 5 * 60 * 1000);
+    // Atualizar a cada 2 minutos em modo telão, 5 minutos normal
+    const intervalo = setInterval(carregarReservas, fullscreenMode ? 2 * 60 * 1000 : 5 * 60 * 1000);
     
     return () => clearInterval(intervalo);
-  }, [dataAtual]);
+  }, [dataAtual, fullscreenMode]);
 
   // Alternar modo tela cheia
   const toggleFullscreen = () => {
-    const header = document.querySelector("header");
-    const nav = document.querySelector("nav");
-    
     if (!fullscreenMode) {
-      // Esconder elementos do layout
+      const header = document.querySelector("header");
+      const nav = document.querySelector("nav");
+      const footer = document.querySelector("footer");
+      
       if (header) header.style.display = "none";
       if (nav) nav.style.display = "none";
+      if (footer) footer.style.display = "none";
       document.body.style.overflow = "hidden";
+      document.documentElement.style.backgroundColor = "#f0f2f5";
     } else {
-      // Restaurar elementos
+      const header = document.querySelector("header");
+      const nav = document.querySelector("nav");
+      const footer = document.querySelector("footer");
+      
       if (header) header.style.display = "block";
       if (nav) nav.style.display = "block";
+      if (footer) footer.style.display = "block";
       document.body.style.overflow = "auto";
+      document.documentElement.style.backgroundColor = "";
     }
     setFullscreenMode(!fullscreenMode);
   };
@@ -106,9 +116,9 @@ export default function Reservas() {
     }
   };
 
-  // Formatar hora
-  const formatarHora = (timeString, duration) => {
-    if (!timeString) return "Horário não informado";
+  // Formatar hora de forma compacta
+  const formatarHoraCompacta = (timeString, duration) => {
+    if (!timeString) return "---";
     
     const [hora, minutos] = timeString.split(":");
     const horaInicio = `${hora}:${minutos}`;
@@ -117,318 +127,475 @@ export default function Reservas() {
     const horaFim = new Date(`2000-01-01T${horaInicio}`);
     horaFim.setHours(horaFim.getHours() + (duration || 1));
     
-    return `${horaInicio} - ${format(horaFim, "HH:mm")}`;
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <AccessTimeIcon sx={{ fontSize: 14 }} />
+        <Typography component="span" sx={{ fontWeight: 600, fontSize: "0.9rem" }}>
+          {horaInicio} - {format(horaFim, "HH:mm")}
+        </Typography>
+      </Box>
+    );
   };
 
-  // Função segura para acessar propriedades aninhadas
+  // Funções seguras para acessar propriedades aninhadas
   const getLabName = (reserva) => {
-    return reserva.lab && reserva.lab.name ? reserva.lab.name : "Laboratório";
+    return reserva.lab?.name || `Lab ${reserva.lab_id}`;
   };
 
   const getLabLocation = (reserva) => {
-    return reserva.lab && reserva.lab.location ? reserva.lab.location : "Local não informado";
+    return reserva.lab?.location || "Local não informado";
   };
 
   const getUserName = (reserva) => {
-    return reserva.user && reserva.user.name ? reserva.user.name : "Nome não disponível";
+    const nome = reserva.user?.name || "Professor";
+    return nome.split(" ")[0]; // Retorna apenas o primeiro nome em modo telão
   };
 
-  const getUserEmail = (reserva) => {
-    return reserva.user && reserva.user.email ? reserva.user.email : "";
+  const getUserInitials = (reserva) => {
+    const nome = getUserName(reserva);
+    return nome.charAt(0).toUpperCase();
   };
 
-  // Componente de card de reserva
+  // Componente de card de reserva COMPACTO
   const ReservaCard = ({ reserva }) => (
     <Card 
-      elevation={2} 
+      elevation={fullscreenMode ? 1 : 2} 
       sx={{ 
         height: "100%",
-        transition: "transform 0.2s",
+        transition: "all 0.2s ease",
+        borderLeft: `4px solid ${
+          reserva.status === "APPROVED" ? "#4caf50" :
+          reserva.status === "PENDING" ? "#ff9800" :
+          reserva.status === "REJECTED" ? "#f44336" : "#9e9e9e"
+        }`,
         "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: 4
-        }
+          transform: "translateY(-2px)",
+          boxShadow: fullscreenMode ? 2 : 4
+        },
+        ...(fullscreenMode && {
+          minHeight: 190,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between"
+        })
       }}
     >
-      <CardContent>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: "bold", color: "#1c286d" }}>
-              {getLabName(reserva)}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
-              <ComputerIcon fontSize="small" />
-              {getLabLocation(reserva)}
-            </Typography>
+      <CardContent sx={{ p: fullscreenMode ? 1.5 : 2, pb: fullscreenMode ? 1.5 : 2 }}>
+        <Stack spacing={fullscreenMode ? 0.8 : 1.5}>
+          {/* Cabeçalho compacto */}
+          <Box sx={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "flex-start",
+            gap: 1
+          }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {fullscreenMode ? (
+                <Avatar 
+                  sx={{ 
+                    width: 32, 
+                    height: 32, 
+                    bgcolor: "#1c286d",
+                    fontSize: "0.875rem"
+                  }}
+                >
+                  {getUserInitials(reserva)}
+                </Avatar>
+              ) : (
+                <ComputerIcon sx={{ fontSize: 20, color: "#1c286d" }} />
+              )}
+              
+              <Box>
+                <Typography 
+                  variant={fullscreenMode ? "subtitle2" : "subtitle1"} 
+                  sx={{ 
+                    fontWeight: 600,
+                    lineHeight: 1.2,
+                    color: "#1c286d"
+                  }}
+                >
+                  {getLabName(reserva)}
+                </Typography>
+                {!fullscreenMode && (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <MeetingRoomIcon sx={{ fontSize: 12 }} />
+                    {getLabLocation(reserva)}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+            
+            <Chip
+              label={fullscreenMode ? getStatusTexto(reserva).substring(0, 3) : getStatusTexto(reserva)}
+              color={getStatusColor(reserva.status)}
+              size="small"
+              sx={{ 
+                height: 24,
+                fontSize: fullscreenMode ? "0.7rem" : "0.75rem",
+                fontWeight: 500
+              }}
+            />
           </Box>
-          <Chip
-            label={getStatusTexto(reserva.status)}
-            color={getStatusColor(reserva.status)}
-            size="small"
-          />
-        </Box>
 
-        <Divider sx={{ my: 2 }} />
+          {!fullscreenMode && <Divider sx={{ my: 1 }} />}
 
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
-            <PersonIcon fontSize="small" />
-            Professor
-          </Typography>
-          <Typography variant="body1">
-            {getUserName(reserva)}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {getUserEmail(reserva)}
-          </Typography>
-        </Box>
+          {/* Corpo compacto */}
+          <Box sx={{ 
+            display: "flex", 
+            flexDirection: fullscreenMode ? "column" : "row",
+            justifyContent: "space-between",
+            alignItems: fullscreenMode ? "flex-start" : "center",
+            gap: fullscreenMode ? 0.5 : 1,
+            flexWrap: "wrap"
+          }}>
+            {/* Professor */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <PersonIcon sx={{ fontSize: fullscreenMode ? 14 : 16, color: "text.secondary" }} />
+              <Typography 
+                variant={fullscreenMode ? "caption" : "body2"} 
+                sx={{ fontWeight: fullscreenMode ? 500 : 400 }}
+              >
+                {getUserName(reserva)}
+              </Typography>
+            </Box>
 
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
-            <ScheduleIcon fontSize="small" />
-            Horário
-          </Typography>
-          <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-            {formatarHora(reserva.time, reserva.duration)}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Duração: {reserva.duration || 1} hora{reserva.duration !== 1 ? "s" : ""}
-          </Typography>
-        </Box>
-
-        {reserva.description && (
-          <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
-              <InfoIcon fontSize="small" />
-              Observações
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {reserva.description}
-            </Typography>
+            {/* Horário */}
+            <Box>
+              {formatarHoraCompacta(reserva.time, reserva.duration)}
+              {!fullscreenMode && (
+                <Typography variant="caption" color="text.secondary" sx={{ ml: 2.5 }}>
+                  {reserva.duration || 1}h
+                </Typography>
+              )}
+            </Box>
           </Box>
-        )}
+
+          {/* Observações (apenas se houver e não em fullscreen) */}
+          {!fullscreenMode && reserva.description && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ 
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden"
+              }}>
+                <InfoIcon sx={{ fontSize: 12, verticalAlign: "middle", mr: 0.5 }} />
+                {reserva.description}
+              </Typography>
+            </Box>
+          )}
+        </Stack>
       </CardContent>
     </Card>
   );
 
-  // Contar laboratórios únicos
-  const contarLaboratoriosUnicos = () => {
-    const nomes = reservas.map(r => getLabName(r));
-    const unicos = new Set(nomes);
-    return unicos.size;
-  };
-
-  // Contar reservas por status
+  // Contadores para resumo
   const contarReservasPorStatus = (status) => {
     return reservas.filter(r => r.status === status).length;
   };
 
+  // Organizar reservas por horário
+  const reservasOrdenadas = [...reservas].sort((a, b) => {
+    if (a.time && b.time) {
+      return a.time.localeCompare(b.time);
+    }
+    return 0;
+  });
+
   return (
     <Box sx={{ 
       minHeight: "100vh",
-      backgroundColor: fullscreenMode ? "#f5f5f5" : "transparent",
-      p: fullscreenMode ? 3 : 0
+      backgroundColor: fullscreenMode ? "#f0f2f5" : "transparent",
+      p: fullscreenMode ? 2 : 0
     }}>
       {/* Barra de controle - visível apenas quando não em fullscreen */}
       {!fullscreenMode && (
-        <Container maxWidth="xl" sx={{ mb: 4 }}>
+        <Container maxWidth="xl" sx={{ mb: 3}}>
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              p: 2, 
+              backgroundColor: "white",
+              borderRadius: 2
+            }}
+          >
+            <Box sx={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 2
+            }}>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: "#1c286d", mb: 0.5 }}>
+                  Reservas do Dia
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <ScheduleIcon fontSize="small" />
+                  {dataFormatada}
+                </Typography>
+              </Box>
+              
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Chip 
+                  label={`${reservas.length} reserva${reservas.length !== 1 ? 's' : ''}`}
+                  color="primary"
+                  size="small"
+                />
+                <Tooltip title="Modo telão (oculta menu e footer)">
+                  <Button
+                    variant="outlined"
+                    startIcon={<MaximizeIcon />}
+                    onClick={toggleFullscreen}
+                    size="small"
+                    sx={{
+                      borderColor: "#1c286d",
+                      color: "#1c286d",
+                      "&:hover": { 
+                        borderColor: "#0d1b5a",
+                        backgroundColor: "rgba(28, 40, 109, 0.04)"
+                      }
+                    }}
+                  >
+                    Telão
+                  </Button>
+                </Tooltip>
+              </Box>
+            </Box>
+          </Paper>
+        </Container>
+      )}
+
+      {/* Header em modo fullscreen */}
+      {fullscreenMode && (
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 2, 
+            mb: 2, 
+            backgroundColor: "#1c286d",
+            color: "white",
+            borderRadius: 1
+          }}
+        >
           <Box sx={{ 
             display: "flex", 
             justifyContent: "space-between", 
             alignItems: "center",
-            mb: 3,
-            p: 2,
-            backgroundColor: "white",
-            borderRadius: 2,
-            boxShadow: 1
+            flexWrap: "wrap",
+            gap: 2
           }}>
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "#1c286d", display: "flex", alignItems: "center", gap: 1 }}>
-                
-                Reservas do Dia
+              <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                RESERVAS DO DIA
               </Typography>
-              <Typography variant="h6" color="text.secondary">
-                {dataFormatada}
+              <Typography variant="h6" sx={{ opacity: 0.9 }}>
+                {dataFormatada.toUpperCase()}
               </Typography>
             </Box>
             
-            <Tooltip title={fullscreenMode ? "Sair do modo telão" : "Modo telão (oculta menu)"}>
-              <Button
-                variant="contained"
-                startIcon={fullscreenMode ? <MinimizeIcon /> : <MaximizeIcon />}
-                onClick={toggleFullscreen}
-                sx={{
-                  backgroundColor: "#1c286d",
-                  "&:hover": { backgroundColor: "#0d1b5a" }
-                }}
-              >
-                {fullscreenMode ? "Sair do Telão" : "Modo Telão"}
-              </Button>
-            </Tooltip>
-          </Box>
-        </Container>
-      )}
-
-      {/* Conteúdo principal */}
-      <Container maxWidth={fullscreenMode ? false : "xl"} sx={{ 
-        px: fullscreenMode ? 4 : 2,
-        width: fullscreenMode ? "100%" : "auto"
-      }}>
-        {/* Header em modo fullscreen */}
-        {fullscreenMode && (
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              p: 3, 
-              mb: 4, 
-              backgroundColor: "#1c286d",
-              color: "white",
-              borderRadius: 2
-            }}
-          >
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Box>
-                <Typography variant="h3" sx={{ fontWeight: "bold", mb: 1 }}>
-                  
-                  Reservas do Dia
-                </Typography>
-                <Typography variant="h5">
-                  {dataFormatada}
-                </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ 
+                display: "flex", 
+                gap: 1,
+                flexWrap: "wrap",
+                justifyContent: "center"
+              }}>
+                <Chip 
+                  label={`${contarReservasPorStatus("APPROVED")} CONFIRMADAS`}
+                  sx={{ 
+                    backgroundColor: "#4caf50", 
+                    color: "white",
+                    fontWeight: 600,
+                    fontSize: "0.75rem"
+                  }}
+                  size="small"
+                />
+                <Chip 
+                  label={`${reservas.length} TOTAL`}
+                  sx={{ 
+                    backgroundColor: "white", 
+                    color: "#1c286d",
+                    fontWeight: 600,
+                    fontSize: "0.75rem"
+                  }}
+                  size="small"
+                />
               </Box>
+              
               <Button
                 variant="contained"
                 color="secondary"
                 startIcon={<MinimizeIcon />}
                 onClick={toggleFullscreen}
-                size="large"
-                sx={{ backgroundColor: "white", color: "#1c286d", "&:hover": { backgroundColor: "#f5f5f5" } }}
+                size="small"
+                sx={{ 
+                  backgroundColor: "white", 
+                  color: "#1c286d",
+                  fontWeight: 600,
+                  "&:hover": { backgroundColor: "#f5f5f5" }
+                }}
               >
-                Sair do Telão
+                SAIR
               </Button>
             </Box>
-          </Paper>
-        )}
+          </Box>
+        </Paper>
+      )}
 
+      {/* Conteúdo principal */}
+      <Container 
+        maxWidth={fullscreenMode ? false : "xl"} 
+        disableGutters={fullscreenMode}
+        sx={{ 
+          px: fullscreenMode ? 3 : 2,
+          width: "100%"
+        }}
+      >
         {/* Loading/Error */}
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+          <Box sx={{ 
+            display: "flex", 
+            justifyContent: "center", 
+            alignItems: "center", 
+            minHeight: "50vh" 
+          }}>
             <CircularProgress />
           </Box>
         ) : error ? (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
             {error}
           </Alert>
         ) : reservas.length === 0 ? (
-          <Paper sx={{ p: 4, textAlign: "center" }}>
-            
-            <Typography variant="h5" color="text.secondary" gutterBottom>
+          <Paper sx={{ 
+            p: 4, 
+            textAlign: "center",
+            borderRadius: 2
+          }}>
+            <ComputerIcon sx={{ fontSize: 60, color: "text.disabled", mb: 2 }} />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
               Nenhuma reserva para hoje
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body2" color="text.secondary">
               Não há reservas agendadas para o dia de hoje.
             </Typography>
           </Paper>
         ) : (
           <>
-            {/* Contador de reservas */}
-            {fullscreenMode && (
-              <Box sx={{ mb: 3, textAlign: "center" }}>
-                <Chip 
-                  label={`${reservas.length} reserva${reservas.length !== 1 ? 's' : ''} hoje`}
-                  color="primary" 
-                  size="large"
-                  sx={{ fontSize: "1.1rem", p: 2 }}
-                />
-              </Box>
-            )}
-
-            {/* Grid de cards */}
-            <Grid container spacing={3}>
-              {reservas
-                .sort((a, b) => {
-                  // Ordenar por horário
-                  if (a.time && b.time) {
-                    return a.time.localeCompare(b.time);
-                  }
-                  return 0;
-                })
-                .map((reserva) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={reserva.id}>
-                    <ReservaCard reserva={reserva} />
-                  </Grid>
-                ))}
+            {/* Grid de cards - MAIS COMPACTO em modo telão */}
+            <Grid container spacing={fullscreenMode ? 1.5 : 3}>
+              {reservasOrdenadas.map((reserva) => (
+                <Grid 
+                  item 
+                  xs={12} 
+                  sm={fullscreenMode ? 6 : 6} 
+                  md={fullscreenMode ? 4 : 4} 
+                  lg={fullscreenMode ? 3 : 3} 
+                  xl={fullscreenMode ? 2 : 3}
+                  key={reserva.id}
+                  sx={{
+                    // Ajuste de altura mínima
+                    minHeight: fullscreenMode ? "auto" : "180px"
+                  }}
+                >
+                  <ReservaCard reserva={reserva} />
+                </Grid>
+              ))}
             </Grid>
 
-            {/* Resumo em modo fullscreen */}
+            {/* Status bar em modo fullscreen */}
             {fullscreenMode && reservas.length > 0 && (
-              <Paper sx={{ mt: 4, p: 3, backgroundColor: "#f8f9fa" }}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-                  Resumo do Dia
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={6} md={3}>
-                    <Box sx={{ textAlign: "center", p: 2, backgroundColor: "white", borderRadius: 2 }}>
-                      <Typography variant="h4" color="primary" sx={{ fontWeight: "bold" }}>
+              <Paper 
+                elevation={0}
+                sx={{ 
+                  mt: 3, 
+                  p: 2, 
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  borderRadius: 1,
+                  border: "1px solid #e0e0e0"
+                }}
+              >
+                <Box sx={{ 
+                  display: "flex", 
+                  justifyContent: "space-between", 
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 2
+                }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <AccessTimeIcon fontSize="small" />
+                    Atualizado: {format(new Date(), "HH:mm:ss")}
+                  </Typography>
+                  
+                  <Box sx={{ display: "flex", gap: 3 }}>
+                    <Box sx={{ textAlign: "center" }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: "#4caf50" }}>
                         {contarReservasPorStatus("APPROVED")}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary">
                         Confirmadas
                       </Typography>
                     </Box>
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <Box sx={{ textAlign: "center", p: 2, backgroundColor: "white", borderRadius: 2 }}>
-                      <Typography variant="h4" sx={{ fontWeight: "bold", color: "orange" }}>
+                    <Box sx={{ textAlign: "center" }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: "#ff9800" }}>
                         {contarReservasPorStatus("PENDING")}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary">
                         Pendentes
                       </Typography>
                     </Box>
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <Box sx={{ textAlign: "center", p: 2, backgroundColor: "white", borderRadius: 2 }}>
-                      <Typography variant="h4" sx={{ fontWeight: "bold", color: "#1c286d" }}>
+                    <Box sx={{ textAlign: "center" }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: "#1c286d" }}>
                         {reservas.length}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary">
                         Total
                       </Typography>
                     </Box>
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <Box sx={{ textAlign: "center", p: 2, backgroundColor: "white", borderRadius: 2 }}>
-                      <Typography variant="h4" sx={{ fontWeight: "bold", color: "green" }}>
-                        {contarLaboratoriosUnicos()}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Laboratórios
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
               </Paper>
             )}
           </>
         )}
       </Container>
 
-      {/* Atualização automática em modo telão */}
+      {/* Indicador de atualização automática em modo telão */}
       {fullscreenMode && (
         <Box sx={{ 
           position: "fixed", 
-          bottom: 16, 
-          right: 16, 
-          backgroundColor: "rgba(0,0,0,0.7)", 
-          color: "white",
-          p: 1,
-          borderRadius: 2,
-          fontSize: "0.8rem"
+          bottom: 8, 
+          right: 8,
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5
         }}>
-          Atualizado em: {format(new Date(), "HH:mm:ss")}
+          <Box sx={{ 
+            width: 8, 
+            height: 8, 
+            borderRadius: "50%", 
+            backgroundColor: "#4caf50",
+            animation: "pulse 2s infinite"
+          }} />
+          <Typography variant="caption" sx={{ 
+            color: "rgba(0,0,0,0.6)",
+            fontWeight: 500
+          }}>
+            ATUALIZANDO AUTOMATICAMENTE
+          </Typography>
         </Box>
       )}
+
+      {/* Estilo para animação de pulse */}
+      <style>
+        {`
+          @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+          }
+        `}
+      </style>
     </Box>
   );
 }
